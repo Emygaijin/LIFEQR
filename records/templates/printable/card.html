@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        .card { width: 3.5in; height: 2in; border: 2px solid #000; margin: auto; padding: 10px; display: flex; align-items: center; justify-content: space-around; }
+        .info { text-align: left; }
+        img.qr { width: 1.5in; height: 1.5in; }
+        small { font-size: 0.7em; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="info">
+            <strong>{{ record.full_name }}</strong><br>
+            Blood: {{ record.blood_group }}<br>
+            {{ record.clinic.name }}<br>
+            <small>Scan QR for full emergency info</small>
+        </div>
+        <img src="{{ qr_data_uri }}" class="qr" alt="QR Code">
+    </div>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5">
+    <h1 class="display-4 fw-bold text-primary mb-4">⚕️ LifeQR</h1>
+    <p class="lead mb-5">Printable Emergency Medical QR Codes for Nigeria</p>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <h3>Clinic?</h3>
+                    <p>Register your clinic to start creating patient emergency records.</p>
+                    <a href="{% url 'records:clinic_register' %}" class="btn btn-success btn-lg">Register Clinic</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h3>Already Registered?</h3>
+                    <p>Log in to manage patient records and print QR cards.</p>
+                    <a href="{% url 'login' %}" class="btn btn-primary btn-lg">Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-5">
+        <small class="text-muted">
+            For emergencies: Scan a LifeQR code on a patient's card or bracelet.
+        </small>
+    </div>
+</div>
+{% endblock %}

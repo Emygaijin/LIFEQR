@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}LifeQR{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+        <div class="container-fluid">
+            <!-- Brand / Home Link -->
+            <a class="navbar-brand fw-bold" href="{% url 'records:clinic_dashboard' %}">
+                LifeQR ⚕️
+            </a>
+
+            {% if user.is_authenticated %}
+                <div class="d-flex align-items-center ms-auto">
+                    <!-- Greeting -->
+                    <span class="text-light me-4">
+                        Hello,
+                        {% if user.is_superuser %}
+                            <strong>Superuser</strong>
+                        {% else %}
+                            <strong>{{ user.clinic.name }}</strong>
+                        {% endif %}
+                    </span>
+
+                    <!-- FIXED LOGOUT: Uses direct /logout/ path to avoid reverse errors -->
+                    <form method="post" action="/logout/" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-light">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Flash Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Main Content Block -->
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Session Timeout Warning -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let timeoutTimer;
+    const TIMEOUT_MS = 4 * 60 * 1000;  // 4 minutes idle warning
+    const LOGOUT_MS = 5 * 60 * 1000;   // 5 minutes total
+
+    function resetTimer() {
+        clearTimeout(timeoutTimer);
+        timeoutTimer = setTimeout(showWarning, TIMEOUT_MS);
+    }
+
+    function showWarning() {
+        if (confirm('Session expires in 1 minute. Click OK to stay logged in or Cancel to logout now.')) {
+            resetTimer();
+        } else {
+            window.location.href = '/logout/';
+        }
+    }
+
+    // Reset timer on user activity
+    ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+        document.addEventListener(event, resetTimer, true);
+    });
+
+    // Initial timer
+    resetTimer();
+});
+</script>
+</body>
+</html>

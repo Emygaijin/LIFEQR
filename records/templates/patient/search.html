@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Search Patient - LifeQR{% endblock %}
+
+{% block content %}
+<h2>Search Patient to Update</h2>
+
+<form method="get" class="mb-4">
+    <div class="input-group">
+        <input type="text" id="patient-search-input" name="q" class="form-control" placeholder="Name or Phone" value="{{ request.GET.q }}">
+        <button class="btn btn-primary" type="submit">Search</button>
+    </div>
+</form>
+
+<div class="list-group" id="suggestions-list" style="display: none;"></div>
+
+{% if results %}
+<table class="table">
+    <thead><tr><th>Name</th><th>Phone</th><th>Updated</th><th>Actions</th></tr></thead>
+    <tbody>
+        {% for r in results %}
+        <tr>
+            <td>{{ r.full_name }}</td>
+            <td>{{ r.phone }}</td>
+            <td>{{ r.updated_at|date:"d M Y" }}</td>
+            <td>
+                <a href="{% url 'records:patient_update' r.pk %}" class="btn btn-sm btn-warning">Update (New QR)</a>
+                <a href="{% url 'records:printable_card' r.unique_id %}" class="btn btn-sm btn-info">Print</a>
+                <a href="{% url 'records:patient_detail' r.pk %}" class="btn btn-sm btn-info me-1">View Details</a>
+            </td>
+
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<script>
+    const input = document.getElementById('patient-search-input');
+    const suggestionsList = document.getElementById('suggestions-list');
+
+    input.addEventListener('input', function() {
+        const query = this.value.trim();
+        if (query.length < 2) {
+            suggestionsList.style.display = 'none';
+            return;
+        }
+
+        fetch(`/patient/suggestions/?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                suggestionsList.innerHTML = '';
+                if (data.length === 0) {
+                    suggestionsList.style.display = 'none';
+                    return;
+                }
+
+                data.forEach(patient => {
+                    const item = document.createElement('a');
+                    item.classList.add('list-group-item', 'list-group-item-action');
+                    item.href = `/patient/search/?q=${encodeURIComponent(patient.full_name)}`;
+                    item.textContent = `${patient.full_name} (${patient.phone})`;
+                    suggestionsList.appendChild(item);
+                });
+
+                suggestionsList.style.display = 'block';
+            });
+    });
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!input.contains(event.target) && !suggestionsList.contains(event.target)) {
+            suggestionsList.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

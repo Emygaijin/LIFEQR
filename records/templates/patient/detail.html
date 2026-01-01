@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3>Patient Details: {{ record.full_name }}</h3>
+                </div>
+                <div class="card-body">
+                    {% if record.photo %}
+                        <div class="text-center mb-4">
+                            <img src="{{ record.photo.url }}" alt="Patient Photo" class="img-fluid rounded" style="max-height: 250px;">
+                        </div>
+                    {% else %}
+                    No photo uploaded
+                    {% endif %}
+
+                    <dl class="row">
+                        <dt class="col-sm-4">Phone</dt>
+                        <dd class="col-sm-8">{{ record.phone|default:"Not provided" }}</dd>
+
+                        <dt class="col-sm-4">Address</dt>
+                        <dd class="col-sm-8">{{ record.address|default:"Not provided" }}</dd>
+
+                        <dt class="col-sm-4">Blood Group</dt>
+                        <dd class="col-sm-8"><strong>{{ record.blood_group }}</strong></dd>
+
+                        <dt class="col-sm-4">Allergies</dt>
+                        <dd class="col-sm-8">{{ record.allergies|default:"None recorded" }}</dd>
+
+                        <dt class="col-sm-4">Chronic Conditions</dt>
+                        <dd class="col-sm-8">{{ record.chronic_conditions|default:"None recorded" }}</dd>
+
+                        <dt class="col-sm-4">Other Notes</dt>
+                        <dd class="col-sm-8">{{ record.other_notes|default:"None recorded" }}</dd>
+
+                        <dt class="col-sm-4">Emergency Contact</dt>
+                        <dd class="col-sm-8">
+                            {{ record.emergency_contact_name }}<br>
+                            {{ record.emergency_contact_phone }}
+                        </dd>
+
+                        <dt class="col-sm-4 text-success fw-bold">Insurance Company</dt>
+                        <dd class="col-sm-8 text-success fw-bold">
+                            {{ record.insurance_name|default:"Not provided" }}
+                            {% if record.insurance_phone %}
+                                <br><a href="tel:{{ record.insurance_phone }}" class="btn btn-success btn-sm mt-2">
+                                    Call Insurance: {{ record.insurance_phone }}
+                                </a>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-4">Last Updated</dt>
+                        <dd class="col-sm-8">{{ record.updated_at|date:"d M Y, H:i" }}</dd>
+                    </dl>
+
+                    <div class="text-center mt-4">
+                        <a href="{% url 'records:patient_update' record.pk %}" class="btn btn-warning btn-lg me-3">
+                            Update Record (New QR)
+                        </a>
+                        <a href="{% url 'records:printable_card' record.unique_id %}" class="btn btn-primary btn-lg">
+                            Print QR Card
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

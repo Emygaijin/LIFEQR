@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Logged Out - LifeQR{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5">
+    <h2 class="mb-4">You have been successfully logged out</h2>
+    <p class="lead">Thank you for using LifeQR. Stay safe!</p>
+    <a href="{% url 'login' %}" class="btn btn-primary btn-lg">Log in again</a>
+</div>
+{% endblock %}

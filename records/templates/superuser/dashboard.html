@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% block title %}Superuser Dashboard - LifeQR{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="display-5 fw-bold text-primary text-center mb-5">
+        ⚕️ LifeQR Superuser Command Center
+    </h1>
+
+    <!-- Stats Grid -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card border-primary shadow h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-primary">Total Clinics</h5>
+                    <h2 class="display-6 fw-bold">{{ total_clinics }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success shadow h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-success">Approved</h5>
+                    <h2 class="display-6 fw-bold text-success">{{ approved_clinics }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning shadow h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-warning">Pending Approval</h5>
+                    <h2 class="display-6 fw-bold text-warning">{{ pending_clinics }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-danger shadow h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-danger">Locked</h5>
+                    <h2 class="display-6 fw-bold text-danger">{{ locked_clinics }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Clinics & Records by State</h5>
+                </div>
+                <div class="card-body">
+                    {% if states_json == '[]' %}
+                        <p class="text-muted text-center py-5">No clinic data available yet. Chart will appear once clinics register.</p>
+                    {% else %}
+                        <canvas id="stateChart" height="100"></canvas>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Key Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Total Active Records:</strong>
+                        <span class="fs-4 fw-bold text-primary">{{ total_records }}</span>
+                    </p>
+                    <p><strong>New Records (Last 7 Days):</strong>
+                        <span class="fs-5 fw-bold text-success">+{{ last_week_records }}</span>
+                    </p>
+                    <hr>
+                    <a href="{% url 'admin:records_clinic_changelist' %}?is_approved__exact=0"
+                       class="btn btn-warning w-100 mb-2">
+                        Review Pending Clinics ({{ pending_clinics }})
+                    </a>
+                    <a href="{% url 'admin:index' %}" class="btn btn-secondary w-100">
+                        Go to Django Admin (Advanced)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Clinics Table -->
+    {% if recent_pending %}
+    <div class="card shadow mb-5">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">Recent Pending Registrations</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Clinic Name</th>
+                            <th>State</th>
+                            <th>Phone</th>
+                            <th>Joined</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for clinic in recent_pending %}
+                        <tr>
+                            <td><strong>{{ clinic.name }}</strong></td>
+                            <td>{{ clinic.state }}</td>
+                            <td>{{ clinic.phone|default:"—" }}</td>
+                            <td>{{ clinic.date_joined|date:"d M Y" }}</td>
+                            <td>
+                                <a href="{% url 'admin:records_clinic_change' clinic.id %}"
+                                   class="btn btn-sm btn-success">
+                                    Review & Approve
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No pending clinics</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <strong>No pending clinic registrations at the moment.</strong>
+    </div>
+    {% endif %}
+
+    <div class="card shadow mt-5">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">Search Clinics</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="mb-4" action="{% url 'admin:records_clinic_changelist' %}">
+                <div class="input-group">
+                    <input type="text" id="clinic-search-input" class="form-control" placeholder="Name, Phone, or State">
+                    <button class="btn btn-primary" type="submit">Search in Admin</button>
+                </div>
+            </form>
+            <div class="list-group" id="clinic-suggestions-list" style="display: none;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Chart Script - Only runs if there's data -->
+{% if states_json != '[]' %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('stateChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: {{ states_json|safe }},
+                    datasets: [
+                        {
+                            label: 'Clinics',
+                            data: {{ clinic_counts_json|safe }},
+                            backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                            borderColor: '#0d6efd',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Active Records',
+                            data: {{ record_counts_json|safe }},
+                            backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                            borderColor: '#198754',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top' },
+                        title: {
+                            display: true,
+                            text: 'Distribution Across Nigeria'
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const clinicInput = document.getElementById('clinic-search-input');
+    const clinicSuggestionsList = document.getElementById('clinic-suggestions-list');
+
+    clinicInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        if (query.length < 2) {
+            clinicSuggestionsList.style.display = 'none';
+            return;
+        }
+
+        fetch(`/clinic/suggestions/?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                clinicSuggestionsList.innerHTML = '';
+                if (data.length === 0) {
+                    clinicSuggestionsList.style.display = 'none';
+                    return;
+                }
+
+                data.forEach(clinic => {
+                    const item = document.createElement('a');
+                    item.classList.add('list-group-item', 'list-group-item-action');
+                    item.href = `/admin/records/clinic/${clinic.id}/change/`;
+                    item.textContent = `${clinic.name} (${clinic.phone} - ${clinic.state})`;
+                    clinicSuggestionsList.appendChild(item);
+                });
+
+                clinicSuggestionsList.style.display = 'block';
+            });
+    });
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!clinicInput.contains(event.target) && !clinicSuggestionsList.contains(event.target)) {
+            clinicSuggestionsList.style.display = 'none';
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}
