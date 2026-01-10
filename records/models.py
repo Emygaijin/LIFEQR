@@ -1,6 +1,9 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
+import uuid
+from django.utils import timezone
+from django_countries.fields import CountryField
 
 # Nigeria States + FCT
 NIGERIA_STATES = [
@@ -24,7 +27,9 @@ class Clinic(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
     address = models.TextField()
-    state = models.CharField(max_length=50, choices=NIGERIA_STATES)
+    country = CountryField(blank_label="Select country", blank=True, null=True)
+    state = models.CharField(max_length=100, blank=True, help_text="State, Province, or Region")
+    # state = models.CharField(max_length=50, choices=NIGERIA_STATES)
     phone = models.CharField(max_length=15, blank=True)
     is_approved = models.BooleanField(default=False)
     is_locked = models.BooleanField(default=False)  # For subscription failure
@@ -61,6 +66,12 @@ class PatientRecord(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
 
+    unique_id = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False
+    )
+
     def __str__(self):
         return f"{self.full_name} ({self.clinic.name})"
 
@@ -80,3 +91,26 @@ class PatientRecord(models.Model):
                 name='unique_active_patient_per_clinic'
             )
         ]
+
+
+class AdCampaign(models.Model):
+    AD_TYPE_CHOICES = [
+        ('video', 'Video Box'),
+        ('background', 'Background Image'),
+    ]
+
+    ad_type = models.CharField(max_length=10, choices=AD_TYPE_CHOICES)
+    title = models.CharField(max_length=200)
+    video_file = models.FileField(upload_to='ads/videos/', blank=True, null=True)
+    background_image = models.ImageField(upload_to='ads/backgrounds/', blank=True, null=True)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    target_countries = models.TextField(
+        blank=True,
+        help_text="Comma-separated country codes (auto-filled from dropdown in admin)"
+    )
+    target_states = models.TextField(blank=True, help_text="Comma-separated states/regions (optional)")
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.get_ad_type_display()})"

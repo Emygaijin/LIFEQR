@@ -23,8 +23,12 @@
             <td>{{ r.phone }}</td>
             <td>{{ r.updated_at|date:"d M Y" }}</td>
             <td>
-                <a href="{% url 'records:patient_update' r.pk %}" class="btn btn-sm btn-warning">Update (New QR)</a>
-                <a href="{% url 'records:printable_card' r.unique_id %}" class="btn btn-sm btn-info">Print</a>
+                <a href="{% url 'records:patient_delete' r.pk %}" class="btn btn-sm btn-danger me-1">Delete Record</a>
+                <a href="javascript:void(0)"
+                   onclick="window.open('{% url 'records:printable_card' r.unique_id %}', '_blank', 'width=800,height=600'); return false;"
+                   class="btn btn-sm btn-primary">
+                    Print QR Card
+                </a>
                 <a href="{% url 'records:patient_detail' r.pk %}" class="btn btn-sm btn-info me-1">View Details</a>
             </td>
 

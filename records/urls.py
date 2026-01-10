@@ -12,7 +12,7 @@ urlpatterns = [
 
     # Patient Records
     path('patient/new/', views.patient_create, name='patient_create'),
-    path('patient/<int:pk>/update/', views.patient_update, name='patient_update'),
+    path('patient/<int:pk>/delete/', views.patient_delete, name='patient_delete'),
     path('patient/search/', views.patient_search, name='patient_search'),
 
     # Printable Card

@@ -1,23 +1,169 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-        .card { width: 3.5in; height: 2in; border: 2px solid #000; margin: auto; padding: 10px; display: flex; align-items: center; justify-content: space-around; }
-        .info { text-align: left; }
-        img.qr { width: 1.5in; height: 1.5in; }
-        small { font-size: 0.7em; }
+        @page { size: 3.60in 2.30in; margin: 0; }
+        body { margin: 0; font-family: Arial, sans-serif; background: white; }
+
+        .card {
+            width: 3.60in;
+            height: 2.30in;
+            border: 2px solid #d32f2f;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        table {
+            width: 100%;
+            height: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        /* ROW HEIGHTS */
+        tr.header-row { height: 34px; }
+        tr.footer-row { height: 36px; }
+        tr.main-row { height: calc(2.30in - 34px - 36px); }
+
+        td {
+            vertical-align: middle;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        /* HEADER */
+        .header {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #d32f2f;
+            line-height: 1;
+        }
+
+        .tagline {
+            font-size: 9pt;
+            font-style: italic;
+            color: #555;
+            margin-top: 2px;
+        }
+
+        /* LEFT */
+        .left {
+            width: 50%;
+            padding-top: 6px;
+            background: white;
+        }
+
+        .photo {
+            width: 1in;
+            height: 1in;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid #0d6efd;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .name {
+            margin-top: 6px;
+            font-size: 13pt;
+            font-weight: bold;
+            line-height: 1.1;
+            padding: 0 4px;
+            word-wrap: break-word;
+        }
+
+        /* RIGHT */
+        .right {
+            width: 50%;
+            background: #f8f9fa;
+            padding-top: 4px;
+        }
+
+        .emergency {
+            font-size: 11pt;
+            font-weight: bold;
+            color: #b71c1c;
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+
+        .qr {
+            width: 1.2in;
+            height: 1.2in;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* FOOTER */
+        .footer {
+            font-size: 9pt;
+            color: #333;
+            text-align: center;
+            line-height: 1.25;
+            padding-top: 4px;
+            background: white;
+        }
+
+        .clinic-name {
+            font-weight: bold;
+            display: block;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        .clinic-location {
+            font-size: 8.5pt;
+            color: #555;
+            display: block;
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="info">
-            <strong>{{ record.full_name }}</strong><br>
-            Blood: {{ record.blood_group }}<br>
-            {{ record.clinic.name }}<br>
-            <small>Scan QR for full emergency info</small>
-        </div>
-        <img src="{{ qr_data_uri }}" class="qr" alt="QR Code">
-    </div>
+<div class="card">
+    <table>
+        <!-- HEADER -->
+        <tr class="header-row">
+            <td colspan="2">
+                <div class="header">LIFEQR</div>
+                <div class="tagline">making a difference</div>
+            </td>
+        </tr>
+
+        <!-- MAIN -->
+        <tr class="main-row">
+            <td class="left">
+                {% if photo_data_uri %}
+                    <img src="{{ photo_data_uri }}" class="photo" alt="Patient Photo">
+                {% else %}
+                    <div class="photo" style="background:#ddd;"></div>
+                {% endif %}
+                <div class="name">{{ record.full_name }}</div>
+            </td>
+
+            <td class="right">
+                <div class="emergency">
+                    EMERGENCY?<br>
+                    SCAN HERE QUICK!
+                </div>
+                <img src="{{ qr_data_uri }}" class="qr" alt="Emergency QR Code">
+            </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr class="footer-row">
+            <td colspan="2" class="footer">
+                <span class="clinic-name">
+                    Issued by {{ record.clinic.name }}
+                </span>
+                <span class="clinic-location">
+                    {% if record.clinic.state %}{{ record.clinic.state }}{% endif %}
+                    {% if record.clinic.country %} • {{ record.clinic.country.name }}{% endif %}
+                </span>
+            </td>
+        </tr>
+    </table>
+</div>
 </body>
 </html>

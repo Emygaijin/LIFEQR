@@ -1,39 +1,215 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard - {{ clinic.name }}{% endblock %}
+
+{% block extra_head %}
+    <!-- Background Ad -->
+    {% if background_ad %}
+    <style>
+        body {
+            background-image: url("{{ background_ad.background_image.url }}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+    </style>
+    {% endif %}
+
+    <!-- Video Box: Pure CSS, no Bootstrap, strict 300x300, top-right fixed -->
+    <style>
+        #video-ad-box {
+            position: fixed !important;
+            top: 20px !important;
+            right: 20px !important;
+            width: 300px !important;
+            height: 300px !important;
+            z-index: 99999 !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            border-radius: 12px;
+            overflow: hidden !important;
+            background: #ffffff;
+            display: flex !important;
+            flex-direction: column;
+        }
+        #video-player-container {
+            flex: 1;
+            background: #000;
+            overflow: hidden !important;
+        }
+        #video-player-container video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            object-position: center !important;
+            display: block !important;
+        }
+        #video-ad-box .header {
+            background: #6c757d;
+            color: white;
+            font-size: 0.85rem;
+            padding: 6px 10px;
+            text-align: center;
+            position: relative;
+        }
+        .close-btn {
+            position: absolute;
+            top: 4px;
+            right: 10px;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            background: rgba(0,0,0,0.3);
+            width: 22px;
+            height: 22px;
+            line-height: 22px;
+            text-align: center;
+            border-radius: 50%;
+        }
+        #video-ad-box .footer {
+            background: #f8f9fa;
+            color: #666;
+            font-size: 0.7rem;
+            padding: 4px;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            #video-ad-box {
+                width: 240px !important;
+                height: 240px !important;
+                top: 10px !important;
+                right: 10px !important;
+            }
+        }
+    </style>
+{% endblock %}
 
 {% block content %}
-<h2>Welcome, {{ clinic.name }} ({{ clinic.state }})</h2>
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card text-white bg-success">
-            <div class="card-body">
-                <h5>Total Active Records</h5>
-                <h3>{{ total_records }}</h3>
+<div class="container py-4">
+    <h2 class="mb-4">
+        Welcome, <strong>{{ clinic.name }}</strong>
+        {% if clinic.state %} ({{ clinic.state }}{% endif %}
+        {% if clinic.country %}, {{ clinic.country.name }}{% endif %})
+    </h2>
+
+    <!-- Total Records Card -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-success shadow">
+                <div class="card-body text-center">
+                    <h5>Total Active Records</h5>
+                    <h2 class="display-5 fw-bold mb-0">{{ total_records }}</h2>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Action Buttons -->
+    <div class="d-grid d-md-flex gap-3 justify-content-md-start mb-5">
+        <a href="{% url 'records:patient_create' %}" class="btn btn-primary btn-lg px-5">
+            + Create New Record
+        </a>
+        <a href="{% url 'records:patient_search' %}" class="btn btn-outline-primary btn-lg px-5">
+            Search Patient Records
+        </a>
+    </div>
+
+    <!-- Recent Records Table -->
+    <h4 class="mb-3">Recent Patient Records</h4>
+    {% if recent_records %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Blood Group</th>
+                    <th>Updated</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in recent_records %}
+                <tr>
+                    <td><strong>{{ r.full_name }}</strong></td>
+                    <td>{{ r.phone|default:"—" }}</td>
+                    <td><span class="badge bg-danger fs-6">{{ r.blood_group }}</span></td>
+                    <td>{{ r.updated_at|date:"d M Y" }}</td>
+                    <td class="text-center">
+                        <a href="{% url 'records:patient_detail' r.pk %}" class="btn btn-sm btn-info me-1">View</a>
+                        <a href="javascript:void(0)" onclick="window.open('{% url 'records:printable_card' r.unique_id %}', '_blank', 'width=900,height=600');" class="btn btn-sm btn-primary me-1">Print QR</a>
+                        <a href="{% url 'records:patient_delete' r.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        No records yet. Click "Create New Record" to get started!
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <strong>No patient records yet.</strong> Start by creating your first one!
+    </div>
+    {% endif %}
 </div>
 
-<div class="d-grid gap-2 d-md-flex justify-content-md-start mb-4">
-    <a href="{% url 'records:patient_create' %}" class="btn btn-primary btn-lg">+ Create New Record</a>
-    <a href="{% url 'records:patient_search' %}" class="btn btn-outline-primary btn-lg">Search / Update Record</a>
+<!-- Video Ad Box - Standalone, outside container -->
+{% if video_ads %}
+<div id="video-ad-box">
+    <div class="header">
+        Sponsored Content
+        <span class="close-btn" onclick="document.getElementById('video-ad-box').style.display='none'">×</span>
+    </div>
+    <div id="video-player-container"></div>
+    <div class="footer">Advertisement</div>
 </div>
 
-<h4>Recent Records</h4>
-<table class="table table-hover">
-    <thead><tr><th>Name</th><th>Phone</th><th>Blood Group</th><th>Updated</th><th>Action</th></tr></thead>
-    <tbody>
-        {% for r in recent_records %}
-        <tr>
-            <td>{{ r.full_name }}</td>
-            <td>{{ r.phone }}</td>
-            <td>{{ r.blood_group }}</td>
-            <td>{{ r.updated_at|date:"d M Y" }}</td>
-            <td><a href="{% url 'records:printable_card' r.unique_id %}" class="btn btn-sm btn-outline-secondary">Print QR</a></td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="5">No records yet. Create one!</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const container = document.getElementById('video-player-container');
+        const videos = [
+            {% for ad in video_ads %}
+                "{{ ad.video_file.url }}",
+            {% endfor %}
+        ];
+
+        if (videos.length === 0) return;
+
+        let currentIndex = 0;
+        const videoElement = document.createElement('video');
+        videoElement.autoplay = true;
+        videoElement.loop = false;
+        videoElement.muted = true;
+        videoElement.playsInline = true;
+        videoElement.controls = true;
+
+        // Force exact fit - no stretching
+        videoElement.width = 300;
+        videoElement.height = 300;
+        videoElement.style.width = '100%';
+        videoElement.style.height = '100%';
+        videoElement.style.objectFit = 'cover';
+        videoElement.style.objectPosition = 'center';
+
+        container.appendChild(videoElement);
+
+        function playNext() {
+            if (currentIndex >= videos.length) {
+                currentIndex = 0;
+            }
+            videoElement.src = videos[currentIndex];
+            videoElement.load();
+            videoElement.play().catch(e => console.log("Play error:", e));
+            currentIndex++;
+        }
+
+        videoElement.addEventListener('ended', playNext);
+        playNext();
+    });
+</script>
+{% endif %}
 {% endblock %}

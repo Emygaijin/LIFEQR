@@ -3,8 +3,70 @@ from django.db.models import Count, Q  # <-- This was missing!
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.html import format_html
-
+from django_countries import countries
 from .models import Clinic, PatientRecord
+from .models import AdCampaign
+from django_countries.fields import CountryField
+from django import forms
+
+
+
+class AdCampaignAdminForm(forms.ModelForm):
+    class Meta:
+        model = AdCampaign
+        fields = '__all__'
+
+    target_countries = forms.MultipleChoiceField(
+        choices=[(code, name) for code, name in countries],
+        required=False,
+        widget=forms.SelectMultiple(attrs={'size': 10}),
+        help_text="Select countries (hold Ctrl/Cmd for multiple)"
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            # Pre-fill with existing codes
+            self.fields['target_countries'].initial = self.instance.target_countries.split(',') if self.instance.target_countries else []
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Save selected codes as comma-separated string
+        instance.target_countries = ','.join(self.cleaned_data['target_countries'])
+        if commit:
+            instance.save()
+        return instance
+
+
+@admin.register(AdCampaign)
+class AdCampaignAdmin(admin.ModelAdmin):
+    form = AdCampaignAdminForm  # Use our custom form
+    list_display = ('title', 'ad_type', 'start_date', 'end_date', 'is_active', 'target_countries_short', 'target_states_short')
+    list_filter = ('ad_type', 'is_active', 'start_date', 'end_date')
+    search_fields = ('title',)
+    list_per_page = 20
+    date_hierarchy = 'start_date'
+
+    def target_countries_short(self, obj):
+        if obj.target_countries:
+            codes = obj.target_countries.split(',')
+            return ', '.join(code.strip() for code in codes[:3]) + ('...' if len(codes) > 3 else '')
+        return "All countries"
+    target_countries_short.short_description = "Countries"
+
+    def target_states_short(self, obj):
+        if obj.target_states:
+            states = obj.target_states.split(',')
+            return ', '.join(s.strip() for s in states[:3]) + ('...' if len(states) > 3 else '')
+        return "All states"
+    target_states_short.short_description = "States"
+
+    fieldsets = (
+        ('Basic Info', {'fields': ('title', 'ad_type', 'is_active')}),
+        ('Schedule', {'fields': ('start_date', 'end_date')}),
+        ('Targeting', {'fields': ('target_countries', 'target_states')}),
+        ('Content', {'fields': ('video_file', 'background_image')}),
+    )
 
 
 @admin.register(Clinic)

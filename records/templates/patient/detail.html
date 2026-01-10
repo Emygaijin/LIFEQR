@@ -15,7 +15,7 @@
                             <img src="{{ record.photo.url }}" alt="Patient Photo" class="img-fluid rounded" style="max-height: 250px;">
                         </div>
                     {% else %}
-                    No photo uploaded
+                        <p class="text-center text-muted">No photo uploaded</p>
                     {% endif %}
 
                     <dl class="row">
@@ -52,17 +52,32 @@
                                 </a>
                             {% endif %}
                         </dd>
-
-                        <dt class="col-sm-4">Last Updated</dt>
-                        <dd class="col-sm-8">{{ record.updated_at|date:"d M Y, H:i" }}</dd>
                     </dl>
 
-                    <div class="text-center mt-4">
-                        <a href="{% url 'records:patient_update' record.pk %}" class="btn btn-warning btn-lg me-3">
-                            Update Record (New QR)
-                        </a>
-                        <a href="{% url 'records:printable_card' record.unique_id %}" class="btn btn-primary btn-lg">
+                    <div class="text-center mt-5">
+                        <!-- Print QR Card (opens in new tab) -->
+                        <a href="javascript:void(0)"
+                           onclick="window.open('{% url 'records:printable_card' record.unique_id %}', '_blank', 'width=900,height=600');"
+                           class="btn btn-primary btn-lg me-3">
                             Print QR Card
+                        </a>
+
+                        <!-- Delete Record -->
+                        <a href="{% url 'records:patient_delete' record.pk %}"
+                           class="btn btn-danger btn-lg">
+                            Delete Record
+                        </a>
+                    </div>
+
+                    <div class="alert alert-info text-center mt-4">
+                        <strong>To update this record:</strong><br>
+                        Delete the current record above, then create a new one with updated information.<br>
+                        A new QR card will be issued automatically.
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <a href="{% url 'records:clinic_dashboard' %}" class="btn btn-secondary">
+                            ← Back to Dashboard
                         </a>
                     </div>
                 </div>

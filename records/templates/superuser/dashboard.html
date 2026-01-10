@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Superuser Dashboard - LifeQR{% endblock %}
 
 {% block content %}
@@ -12,63 +13,128 @@
         <div class="col-md-3">
             <div class="card border-primary shadow h-100">
                 <div class="card-body text-center">
-                    <h5 class="card-title text-primary">Total Clinics</h5>
-                    <h2 class="display-6 fw-bold">{{ total_clinics }}</h2>
+                    <h5 class="text-primary">Total Clinics</h5>
+                    <h2 class="fw-bold">{{ total_clinics }}</h2>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card border-success shadow h-100">
                 <div class="card-body text-center">
-                    <h5 class="card-title text-success">Approved</h5>
-                    <h2 class="display-6 fw-bold text-success">{{ approved_clinics }}</h2>
+                    <h5 class="text-success">Approved</h5>
+                    <h2 class="fw-bold text-success">{{ approved_clinics }}</h2>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card border-warning shadow h-100">
                 <div class="card-body text-center">
-                    <h5 class="card-title text-warning">Pending Approval</h5>
-                    <h2 class="display-6 fw-bold text-warning">{{ pending_clinics }}</h2>
+                    <h5 class="text-warning">Pending</h5>
+                    <h2 class="fw-bold text-warning">{{ pending_clinics }}</h2>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card border-danger shadow h-100">
                 <div class="card-body text-center">
-                    <h5 class="card-title text-danger">Locked</h5>
-                    <h2 class="display-6 fw-bold text-danger">{{ locked_clinics }}</h2>
+                    <h5 class="text-danger">Locked</h5>
+                    <h2 class="fw-bold text-danger">{{ locked_clinics }}</h2>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Main Grid -->
     <div class="row g-4 mb-5">
+        <!-- LEFT COLUMN: Charts & Tables -->
         <div class="col-lg-8">
-            <div class="card shadow">
+            <!-- Country Chart -->
+            <div class="card shadow mb-4">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Clinics & Records by State</h5>
+                    <h5 class="mb-0">Clinics by Country (Top 10)</h5>
                 </div>
-                <div class="card-body">
-                    {% if states_json == '[]' %}
-                        <p class="text-muted text-center py-5">No clinic data available yet. Chart will appear once clinics register.</p>
+                <div class="card-body" style="height: 420px;">
+                    {% if country_names_json != '[]' %}
+                        <canvas id="countryChart"></canvas>
                     {% else %}
-                        <canvas id="stateChart" height="100"></canvas>
+                        <p class="text-muted text-center py-5">No country data yet.</p>
                     {% endif %}
+                </div>
+            </div>
+
+            <!-- Clinics by Country Table -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Clinics by Country ({{ total_countries }} countries)</h5>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Country</th>
+                                <th class="text-end">Clinics</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in country_stats %}
+                            <tr>
+                                <td>{{ stat.country_name }}</td>
+                                <td class="text-end fw-bold">{{ stat.count }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">No clinics registered yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top States/Regions Table -->
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Top 20 States / Regions</h5>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>State / Region</th>
+                                <th class="text-end">Clinics</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in state_stats %}
+                            <tr>
+                                <td>{{ stat.state|default:"Unknown" }}</td>
+                                <td class="text-end fw-bold">{{ stat.count }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">No state data yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
+        <!-- RIGHT COLUMN: Key Metrics + Smart Search -->
         <div class="col-lg-4">
-            <div class="card shadow h-100">
+            <!-- Key Metrics -->
+            <div class="card shadow mb-4">
                 <div class="card-header bg-info text-white">
                     <h5 class="mb-0">Key Metrics</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Total Active Records:</strong>
+                    <p>
+                        <strong>Total Active Records:</strong><br>
                         <span class="fs-4 fw-bold text-primary">{{ total_records }}</span>
                     </p>
-                    <p><strong>New Records (Last 7 Days):</strong>
+                    <p>
+                        <strong>New Records (Last 7 Days):</strong><br>
                         <span class="fs-5 fw-bold text-success">+{{ last_week_records }}</span>
                     </p>
                     <hr>
@@ -77,8 +143,25 @@
                         Review Pending Clinics ({{ pending_clinics }})
                     </a>
                     <a href="{% url 'admin:index' %}" class="btn btn-secondary w-100">
-                        Go to Django Admin (Advanced)
+                        Go to Django Admin
                     </a>
+                </div>
+            </div>
+
+            <!-- Smart Clinic Search -->
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">🔍 Smart Clinic Search</h5>
+                </div>
+                <div class="card-body position-relative">
+                    <form method="get" action="{% url 'admin:records_clinic_changelist' %}">
+                        <div class="input-group input-group-lg">
+                            <input type="text" name="q" id="clinic-search-input" class="form-control"
+                                   placeholder="Name, phone, state, or country" autocomplete="off">
+                            <button class="btn btn-primary" type="submit">Search</button>
+                        </div>
+                    </form>
+                    <div id="clinic-suggestions-list" class="list-group position-absolute w-100 shadow" style="top:100%; z-index:1000; display:none;"></div>
                 </div>
             </div>
         </div>
@@ -96,6 +179,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>Clinic Name</th>
+                            <th>Country</th>
                             <th>State</th>
                             <th>Phone</th>
                             <th>Joined</th>
@@ -106,7 +190,8 @@
                         {% for clinic in recent_pending %}
                         <tr>
                             <td><strong>{{ clinic.name }}</strong></td>
-                            <td>{{ clinic.state }}</td>
+                            <td>{{ clinic.country.name|default:"—" }}</td>
+                            <td>{{ clinic.state|default:"—" }}</td>
                             <td>{{ clinic.phone|default:"—" }}</td>
                             <td>{{ clinic.date_joined|date:"d M Y" }}</td>
                             <td>
@@ -118,7 +203,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="text-center text-muted">No pending clinics</td>
+                            <td colspan="6" class="text-center text-muted">No pending clinics</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -127,23 +212,68 @@
         </div>
     </div>
     {% else %}
-    <div class="alert alert-info text-center">
+    <div class="alert alert-info text-center mb-5">
         <strong>No pending clinic registrations at the moment.</strong>
     </div>
     {% endif %}
 
-    <div class="card shadow mt-5">
-        <div class="card-header bg-secondary text-white">
-            <h5 class="mb-0">Search Clinics</h5>
+    <!-- Ad Campaigns Management Section -->
+    <div class="card shadow mb-5">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">💰 Ad Campaigns Management (Revenue)</h5>
         </div>
         <div class="card-body">
-            <form method="get" class="mb-4" action="{% url 'admin:records_clinic_changelist' %}">
-                <div class="input-group">
-                    <input type="text" id="clinic-search-input" class="form-control" placeholder="Name, Phone, or State">
-                    <button class="btn btn-primary" type="submit">Search in Admin</button>
-                </div>
-            </form>
-            <div class="list-group" id="clinic-suggestions-list" style="display: none;"></div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <p class="mb-0">Manage video and background ads shown on clinic dashboards.</p>
+                <a href="{% url 'admin:records_adcampaign_add' %}" class="btn btn-success">
+                    + Add New Campaign
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Schedule</th>
+                            <th>Target Countries</th>
+                            <th>Target States</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ad in ad_campaigns %}
+                        <tr>
+                            <td><strong>{{ ad.title }}</strong></td>
+                            <td>{{ ad.get_ad_type_display }}</td>
+                            <td>{{ ad.start_date|date:"d M Y" }} - {{ ad.end_date|date:"d M Y" }}</td>
+                            <td>{{ ad.target_countries|default:"All countries" }}</td>
+                            <td>{{ ad.target_states|default:"All states" }}</td>
+                            <td>
+                                {% if ad.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'admin:records_adcampaign_change' ad.pk %}" class="btn btn-sm btn-warning">
+                                    Edit
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                No ad campaigns yet. Click "Add New Campaign" to start monetizing!
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -151,93 +281,88 @@
 <!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Chart Script - Only runs if there's data -->
-{% if states_json != '[]' %}
+<!-- Country Chart Script -->
+{% if country_names_json != '[]' %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('stateChart');
-        if (ctx) {
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: {{ states_json|safe }},
-                    datasets: [
-                        {
-                            label: 'Clinics',
-                            data: {{ clinic_counts_json|safe }},
-                            backgroundColor: 'rgba(13, 110, 253, 0.7)',
-                            borderColor: '#0d6efd',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'Active Records',
-                            data: {{ record_counts_json|safe }},
-                            backgroundColor: 'rgba(25, 135, 84, 0.7)',
-                            borderColor: '#198754',
-                            borderWidth: 1
-                        }
-                    ]
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('countryChart');
+        if (!ctx) return;
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ country_names_json|safe }},
+                datasets: [{
+                    data: {{ country_counts_json|safe }},
+                    backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                    borderColor: '#0d6efd',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',  // Horizontal bars for long country names
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { beginAtZero: true }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1 }
-                        }
-                    },
-                    plugins: {
-                        legend: { position: 'top' },
-                        title: {
-                            display: true,
-                            text: 'Distribution Across Nigeria'
-                        }
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: 'Top 10 Countries by Clinic Count'
                     }
                 }
-            });
-        }
-    });
-</script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    const clinicInput = document.getElementById('clinic-search-input');
-    const clinicSuggestionsList = document.getElementById('clinic-suggestions-list');
-
-    clinicInput.addEventListener('input', function() {
-        const query = this.value.trim();
-        if (query.length < 2) {
-            clinicSuggestionsList.style.display = 'none';
-            return;
-        }
-
-        fetch(`/clinic/suggestions/?q=${encodeURIComponent(query)}`)
-            .then(response => response.json())
-            .then(data => {
-                clinicSuggestionsList.innerHTML = '';
-                if (data.length === 0) {
-                    clinicSuggestionsList.style.display = 'none';
-                    return;
-                }
-
-                data.forEach(clinic => {
-                    const item = document.createElement('a');
-                    item.classList.add('list-group-item', 'list-group-item-action');
-                    item.href = `/admin/records/clinic/${clinic.id}/change/`;
-                    item.textContent = `${clinic.name} (${clinic.phone} - ${clinic.state})`;
-                    clinicSuggestionsList.appendChild(item);
-                });
-
-                clinicSuggestionsList.style.display = 'block';
-            });
-    });
-
-    // Hide suggestions when clicking outside
-    document.addEventListener('click', function(event) {
-        if (!clinicInput.contains(event.target) && !clinicSuggestionsList.contains(event.target)) {
-            clinicSuggestionsList.style.display = 'none';
-        }
+            }
+        });
     });
 </script>
 {% endif %}
+
+<!-- Smart Clinic Search Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.getElementById('clinic-search-input');
+        const box = document.getElementById('clinic-suggestions-list');
+
+        if (!input || !box) return;
+
+        input.addEventListener('input', function () {
+            const q = this.value.trim();
+            if (q.length < 2) {
+                box.style.display = 'none';
+                return;
+            }
+
+            fetch(`/clinic/suggestions/?q=${encodeURIComponent(q)}`)
+                .then(res => res.json())
+                .then(data => {
+                    box.innerHTML = '';
+                    if (!data.length) {
+                        box.style.display = 'none';
+                        return;
+                    }
+
+                    data.forEach(c => {
+                        const a = document.createElement('a');
+                        a.className = 'list-group-item list-group-item-action';
+                        a.href = `/admin/records/clinic/${c.id}/change/`;
+                        a.textContent = `${c.name} (${c.phone || 'No phone'} – ${c.state || 'No state'}, ${c.country || 'No country'})`;
+                        box.appendChild(a);
+                    });
+
+                    box.style.display = 'block';
+                })
+                .catch(() => {
+                    box.style.display = 'none';
+                });
+        });
+
+        document.addEventListener('click', e => {
+            if (!input.contains(e.target) && !box.contains(e.target)) {
+                box.style.display = 'none';
+            }
+        });
+    });
+</script>
 {% endblock %}
