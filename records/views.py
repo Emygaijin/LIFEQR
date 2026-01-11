@@ -215,8 +215,8 @@ def clinic_dashboard(request):
             video_ads.append(ad)
             print(f"    → MATCH! Added video_ad: {ad.title}")
 
-    # === Fetch active background ad (single) ===
-    background_ad = None
+    # === Fetch ALL matching active background ads ===
+    background_ads = []
     background_candidates = AdCampaign.objects.filter(
         ad_type='background',
         is_active=True,
@@ -227,6 +227,7 @@ def clinic_dashboard(request):
     print(f"DEBUG: Found {background_candidates.count()} active background candidates")
     for ad in background_candidates:
         print(f"  - Ad: '{ad.title}' | Active: {ad.is_active} | Dates: {ad.start_date} to {ad.end_date}")
+        print(f"    Targets: Countries='{ad.target_countries}', States='{ad.target_states}'")
 
         match = True
         if ad.target_countries:
@@ -238,21 +239,20 @@ def clinic_dashboard(request):
             if clinic.state and clinic.state.lower() not in states:
                 match = False
         if match:
-            background_ad = ad
-            print(f"    → MATCH! Assigned background_ad: {ad.title}")
-            break
+            background_ads.append(ad)
+            print(f"    → MATCH! Added background_ad: {ad.title}")
 
     # === Final debug ===
-    print("DEBUG: Final video_ads list:", [ad.title for ad in video_ads])
-    print("DEBUG: Final background_ad:", background_ad.title if background_ad else "None")
+    print("DEBUG: Final video_ads list:", [ad.title for ad in video_ads] or "None")
+    print("DEBUG: Final background_ads list:", [ad.title for ad in background_ads] or "None")
     print("=== DEBUG END ===\n")
 
     context = {
         'clinic': clinic,
         'recent_records': recent_records,
         'total_records': PatientRecord.objects.filter(clinic=clinic, is_active=True).count(),
-        'video_ads': video_ads,  # List for queuing/looping
-        'background_ad': background_ad,
+        'video_ads': video_ads,          # list (can be used later)
+        'background_ads': background_ads,  # list for rotation
     }
     return render(request, 'clinic/dashboard.html', context)
 
