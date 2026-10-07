@@ -3,9 +3,14 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
 from django.contrib.auth import authenticate
 from django.contrib import messages
+from django.urls import reverse
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.contrib.auth.models import User
+from django.http import HttpResponse
+from django.core.paginator import Paginator
+from django.template.loader import get_template
+from django.views.decorators.http import require_POST
 import qrcode
 from io import BytesIO
 from datetime import datetime
@@ -84,6 +89,12 @@ def superuser_dashboard(request):
 
     total_countries = len(country_stats)
 
+    # === Paginated Clinic List ===
+    clinics_list = Clinic.objects.all().order_by('-date_joined')
+    paginator = Paginator(clinics_list, 15)  # 15 clinics per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     # === Clinics per State/Region (text field) ===
     state_stats = Clinic.objects.exclude(state__exact='')\
         .values('state')\
@@ -112,7 +123,7 @@ def superuser_dashboard(request):
         'total_records': total_records,
         'last_week_records': last_week_records,
         'recent_pending': recent_pending,
-
+        'page_obj': page_obj,
         # Global stats
         'country_stats': country_stats,
         'total_countries': total_countries,
@@ -127,6 +138,58 @@ def superuser_dashboard(request):
     }
     return render(request, 'superuser/dashboard.html', context)
 
+
+@superuser_required
+@login_required
+def review_pending_clinics(request):
+    pending = Clinic.objects.filter(is_approved=False).order_by('-date_joined')
+    return render(request, 'superuser/review_pending.html', {
+        'pending_clinics': pending,
+    })
+
+
+@superuser_required
+@login_required
+def review_clinic(request, clinic_id):
+    clinic = get_object_or_404(Clinic, id=clinic_id)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'approve':
+            clinic.is_approved = True
+            clinic.is_locked = False
+            clinic.save()
+            messages.success(request, f'"{clinic.name}" has been approved.')
+            return redirect('records:review_pending_clinics')
+
+        elif action == 'reject':
+            clinic.is_locked = True
+            clinic.is_approved = False
+            clinic.save()
+            messages.warning(request, f'"{clinic.name}" has been rejected/locked.')
+            return redirect('records:review_pending_clinics')
+
+    return render(request, 'superuser/review_clinic.html', {
+        'clinic': clinic,
+    })
+
+@superuser_required
+@login_required
+@require_POST
+def toggle_clinic_lock(request, clinic_id):
+    clinic = get_object_or_404(Clinic, id=clinic_id)
+    clinic.is_locked = not clinic.is_locked
+    clinic.save()
+
+    if clinic.is_locked:
+        messages.warning(request, f'"{clinic.name}" has been locked.')
+    else:
+        messages.success(request, f'"{clinic.name}" has been unlocked.')
+
+    # Go back to the same page of the dashboard
+    page = request.POST.get('page', 1)
+    return redirect(f"{reverse('records:superuser_dashboard')}?page={page}")
 
 # Clinic Registration
 def clinic_register(request):

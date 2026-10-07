@@ -51,7 +51,7 @@ class PatientRecord(models.Model):
     phone = models.CharField(max_length=15, blank=True)
     address = models.TextField(blank=True)
     photo = models.ImageField(upload_to='patients/', blank=True, null=True)
-
+    current_medications = models.TextField(blank=True)
     emergency_contact_name = models.CharField(max_length=200, blank=True)
     emergency_contact_phone = models.CharField(max_length=15, blank=True)
     insurance_name = models.CharField(max_length=200, blank=True, verbose_name="Insurance Company Name")

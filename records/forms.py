@@ -65,13 +65,14 @@ class PatientRecordForm(forms.ModelForm):
         fields = [
             'full_name', 'phone', 'address', 'photo',
             'emergency_contact_name', 'emergency_contact_phone',
-            'blood_group', 'allergies', 'insurance_name', 'insurance_phone', 'chronic_conditions', 'other_notes'
+            'blood_group', 'allergies', 'current_medications','insurance_name', 'insurance_phone', 'chronic_conditions', 'other_notes'
         ]
         widgets = {
             'address': forms.Textarea(attrs={'rows': 3}),
             'allergies': forms.Textarea(attrs={'rows': 2}),
             'chronic_conditions': forms.Textarea(attrs={'rows': 2}),
             'other_notes': forms.Textarea(attrs={'rows': 3}),
+            'current_medications': forms.Textarea(attrs={'rows': 3}),
         }
 
     def __init__(self, *args, **kwargs):

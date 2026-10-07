@@ -138,7 +138,7 @@
                         <span class="fs-5 fw-bold text-success">+{{ last_week_records }}</span>
                     </p>
                     <hr>
-                    <a href="{% url 'admin:records_clinic_changelist' %}?is_approved__exact=0"
+                    <a href="{% url 'records:review_pending_clinics' %}"
                        class="btn btn-warning w-100 mb-2">
                         Review Pending Clinics ({{ pending_clinics }})
                     </a>
@@ -195,7 +195,7 @@
                             <td>{{ clinic.phone|default:"—" }}</td>
                             <td>{{ clinic.date_joined|date:"d M Y" }}</td>
                             <td>
-                                <a href="{% url 'admin:records_clinic_change' clinic.id %}"
+                                <a href="{% url 'records:review_clinic' clinic.id %}"
                                    class="btn btn-sm btn-success">
                                     Review & Approve
                                 </a>
@@ -216,6 +216,101 @@
         <strong>No pending clinic registrations at the moment.</strong>
     </div>
     {% endif %}
+
+    <!-- All Clinics (Paginated) -->
+    <div class="card shadow mb-5">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">All Clinics</h5>
+            <span class="badge bg-light text-dark">{{ page_obj.paginator.count }} total</span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Clinic Name</th>
+                            <th>Country</th>
+                            <th>State</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for clinic in page_obj %}
+                        <tr>
+                            <td><strong>{{ clinic.name }}</strong></td>
+                            <td>{{ clinic.country.name|default:"—" }}</td>
+                            <td>{{ clinic.state|default:"—" }}</td>
+                            <td>{{ clinic.phone|default:"—" }}</td>
+                            <td>
+                                {% if clinic.is_locked %}
+                                    <span class="badge bg-danger">Locked</span>
+                                {% elif clinic.is_approved %}
+                                    <span class="badge bg-success">Approved</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ clinic.date_joined|date:"d M Y" }}</td>
+                            <td class="d-flex gap-1">
+                                <!-- View button -->
+                                <a href="{% url 'records:review_clinic' clinic.id %}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    View
+                                </a>
+
+                                <!-- Lock / Unlock button -->
+                                <form method="post" action="{% url 'records:toggle_clinic_lock' clinic.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="page" value="{{ page_obj.number }}">
+                                    {% if clinic.is_locked %}
+                                        <button type="submit" class="btn btn-sm btn-success">Unlock</button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Lock this clinic?')">
+                                            Lock
+                                        </button>
+                                    {% endif %}
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No clinics found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
 
     <!-- Ad Campaigns Management Section -->
     <div class="card shadow mb-5">
@@ -346,7 +441,7 @@
                     data.forEach(c => {
                         const a = document.createElement('a');
                         a.className = 'list-group-item list-group-item-action';
-                        a.href = `/admin/records/clinic/${c.id}/change/`;
+                        a.href = `/superuser/review-clinic/${c.id}/`;
                         a.textContent = `${c.name} (${c.phone || 'No phone'} – ${c.state || 'No state'}, ${c.country || 'No country'})`;
                         box.appendChild(a);
                     });

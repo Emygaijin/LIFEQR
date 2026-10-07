@@ -23,7 +23,9 @@ urlpatterns = [
 
     # Superuser Dashboard
     path('superuser/', views.superuser_dashboard, name='superuser_dashboard'),
-
+    path('superuser/review-pending/', views.review_pending_clinics, name='review_pending_clinics'),
+    path('superuser/review-clinic/<int:clinic_id>/', views.review_clinic, name='review_clinic'),
+    path('superuser/clinic/<int:clinic_id>/toggle-lock/', views.toggle_clinic_lock, name='toggle_clinic_lock'),
     path('patient/suggestions/', views.patient_suggestions, name='patient_suggestions'),
 
     path('patient/<int:pk>/detail/', views.patient_detail, name='patient_detail'),

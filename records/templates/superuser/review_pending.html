@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Review Pending Clinics - LifeQR{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Pending Clinic Registrations</h2>
+        <a href="{% url 'records:superuser_dashboard' %}" class="btn btn-secondary">← Back to Dashboard</a>
+    </div>
+
+    {% if pending_clinics %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Clinic Name</th>
+                    <th>Country</th>
+                    <th>State</th>
+                    <th>Phone</th>
+                    <th>Joined</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for clinic in pending_clinics %}
+                <tr>
+                    <td><strong>{{ clinic.name }}</strong></td>
+                    <td>{{ clinic.country.name|default:"—" }}</td>
+                    <td>{{ clinic.state|default:"—" }}</td>
+                    <td>{{ clinic.phone|default:"—" }}</td>
+                    <td>{{ clinic.date_joined|date:"d M Y" }}</td>
+                    <td>
+                        <a href="{% url 'records:review_clinic' clinic.id %}" class="btn btn-sm btn-success">
+                            Review & Approve
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        No pending clinics right now.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

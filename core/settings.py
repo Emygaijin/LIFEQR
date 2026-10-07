@@ -132,17 +132,18 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
-# Login URLs
-LOGIN_URL = 'login'
+# Login URLs – use the actual path (safer) or the correct namespaced name
+LOGIN_URL = '/login/'                    # ← change this (use your real login path)
 LOGIN_REDIRECT_URL = 'records:clinic_dashboard'
-LOGOUT_REDIRECT_URL = 'login'
+LOGOUT_REDIRECT_URL = '/login/'          # ← also use the path here
 
-# Session timeout: 5 minutes (300 seconds)
-SESSION_COOKIE_AGE = 300
+# Session timeout
+SESSION_COOKIE_AGE = 300                 # 5 minutes
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_SAVE_EVERY_REQUEST = True  # Resets timer on activity
+SESSION_SAVE_EVERY_REQUEST = True
 
-# Security
-SESSION_COOKIE_SECURE = True  # HTTPS only
+# Security – IMPORTANT for local development
+SESSION_COOKIE_SECURE = False            # ← set to False while working on localhost (http)
+# When you deploy to HTTPS, change it back to True
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
